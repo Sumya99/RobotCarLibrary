@@ -3,11 +3,19 @@
 #include <WebSocketsServer.h>
 #include "index.h"
 
+
+#define SOUND_SPEED 0.034 //define sound speed in cm/uS
+long duration;
+float distanceCm;
+
+
 #define CMD_STOP 0
 #define CMD_FORWARD 1
 #define CMD_BACKWARD 2
 #define CMD_LEFT 4
 #define CMD_RIGHT 8
+
+#define MOVE_DELAY 200
 
 // General purpose leds
 #define LED1 33
@@ -33,6 +41,20 @@
 #define AIN2  26
 #define BIN1  4
 #define BIN2  33 
+
+
+//Ultrasonic sensor
+#define ECHO  21  
+#define TRG   22
+
+//Line following sensor  
+#define OUT1  19
+#define OUT2  18
+#define OUT3  5
+#define OUT4  16
+#define OUT5  17
+
+
 
 int previous_command=0;
 
@@ -105,6 +127,17 @@ void setup() {
 
   pinMode(TOUCH, INPUT);
 
+  //Line following sensor
+  pinMode(OUT1, INPUT);
+  pinMode(OUT2, INPUT);
+  pinMode(OUT3, INPUT);
+  pinMode(OUT4, INPUT);
+  pinMode(OUT5, INPUT);
+
+  //Ultrasonic sensor
+  pinMode(TRG, OUTPUT);
+  pinMode(ECHO, INPUT); 
+
   pinMode(STDBY, OUTPUT);
   pinMode(PWMA, OUTPUT);
   pinMode(PWMB, OUTPUT);
@@ -114,8 +147,8 @@ void setup() {
   pinMode(BIN2, OUTPUT);
 
   CAR_stop();
-  CAR_speed_wheelA(175);
-  CAR_speed_wheelB(175);
+  CAR_speed_wheelA(150);
+  CAR_speed_wheelB(150);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -144,13 +177,42 @@ void setup() {
 void loop() {
   webSocket.loop();
   // TO DO: Your code here
+
+  int out1 = digitalRead(OUT1);
+  int out2 = digitalRead(OUT2);
+  int out3 = digitalRead(OUT3);
+  int out4 = digitalRead(OUT4);
+  int out5 = digitalRead(OUT5);
+
+  Serial.print(out1);
+  Serial.print(out2);
+  Serial.print(out3);
+  Serial.print(out4);
+  Serial.println(out5);
+  
+  // Clears the trigPin
+  digitalWrite(TRG, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(TRG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRG, LOW);
+  
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(ECHO, HIGH);
+  // Calculate the distance
+  distanceCm = duration * SOUND_SPEED/2;
+  // Prints the distance in the Serial Monitor
+  Serial.print("Distance (cm): ");
+  Serial.println(distanceCm);
+
 }
 
 void CAR_moveForward() {
-  if(previous_command == CMD_BACKWARD){
+  //if(previous_command == CMD_BACKWARD){
     CAR_stop();
-    delay(350);
-  }
+    delay(MOVE_DELAY);
+ // }
   digitalWrite(AIN1, HIGH);
   digitalWrite(AIN2, LOW);
   digitalWrite(BIN1, HIGH);
@@ -160,10 +222,10 @@ void CAR_moveForward() {
 }
 
 void CAR_moveBackward() {
-  if(previous_command == CMD_FORWARD){
+ // if(previous_command == CMD_FORWARD){
     CAR_stop();
-    delay(350);
-  }
+    delay(MOVE_DELAY);
+  //}
   digitalWrite(AIN1, LOW);
   digitalWrite(AIN2, HIGH);
   digitalWrite(BIN1, LOW);
@@ -173,10 +235,10 @@ void CAR_moveBackward() {
 }
 
 void CAR_turnLeft() {
-  if(previous_command == CMD_RIGHT){
+  //if(previous_command == CMD_RIGHT){
     CAR_stop();
-    delay(350);
-  }
+    delay(MOVE_DELAY);
+  //}
   digitalWrite(AIN1, HIGH);
   digitalWrite(AIN2, LOW);
   digitalWrite(BIN1, LOW);
@@ -186,10 +248,10 @@ void CAR_turnLeft() {
 }
 
 void CAR_turnRight() {
-  if(previous_command == CMD_LEFT){
+ // if(previous_command == CMD_LEFT){
     CAR_stop();
-    delay(350);
-  }
+    delay(MOVE_DELAY);
+  //}
   digitalWrite(AIN1, LOW);
   digitalWrite(AIN2, HIGH);
   digitalWrite(BIN1, HIGH);
